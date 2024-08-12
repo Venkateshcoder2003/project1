@@ -3,6 +3,7 @@ import React from 'react'
 //importing Home.css file
 import "./Home.css";
 import Button from "react-bootstrap/Button";
+import { NavLink } from 'react-router-dom';
 
 const Home = () => {
     return (
@@ -19,7 +20,7 @@ const Home = () => {
 
                         </p>
                         <div className='btn_div mt-4'>
-                            <Button variant='danger' style={{ letterSpacing: "1px", border: "none", borderRadius: 4, background: "#2f2d69", marginRight: 24 }}>Project</Button>
+                            <Button variant='danger' style={{ letterSpacing: "1px", border: "none", borderRadius: 4, background: "#2f2d69", marginRight: 24 }}><NavLink to="/Playlist" className="text-decoration-none" style={{ color: "#fff" }}>Project</NavLink></Button>
                         </div>
                     </div>
                     <div className='right_div'>

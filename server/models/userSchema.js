@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema({
     },
     lname: {
         type: String,
-        //required: true,
+        required: true,
         trim: true
     },
     email: {
@@ -58,10 +58,12 @@ userSchema.pre("save", async function (next) {
 userSchema.methods.Messagesave = async function (message) {
     try {
         this.messages = this.messages.concat({ message });
+        //instead of concat we can also use push
         await this.save();
         return message;
     } catch (error) {
         console.log(error)
+        //we can also use throw error for clarity
     }
 }
 
@@ -80,8 +82,34 @@ userSchema.methods.Messagesave = async function (message) {
 //         console.log(error);
 //     }
 // }
+
+//Thapa Technical auth
+
+userSchema.methods.generateToken = async function () {
+    try {
+        return jwt.sign(
+            //payload
+            {
+                userId: this._id.toString(),
+                email: this.email
+            },
+            //signature(JWT Secrete key in .env file)
+            process.env.JWT_SECRET,
+            {
+                expiresIn: "30d"
+            }
+        )
+
+    } catch (error) {
+        console.log(error)
+        throw error;
+
+    }
+}
+
+
 //createing model
-const users = new mongoose.model("users", userSchema);
+const users = new mongoose.model("user", userSchema);
 
 
 module.exports = users;

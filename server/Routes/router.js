@@ -25,11 +25,15 @@ router.post("/register", async (req, res) => {
     }
 
     try {
-        const preuser = await users.findOne({ email: email });
+        let preuser = await users.findOne({ email: email });
 
         if (preuser) {
             const userMessage = await preuser.Messagesave(message);
             console.log(userMessage);
+
+            //generating token
+            const token = await preuser.generateToken();
+            console.log("Preuser Token: ", token);
             const mailOptions = {
                 from: process.env.EMAIL,
                 to: email,
@@ -52,6 +56,9 @@ router.post("/register", async (req, res) => {
 
             const storeData = await finalUser.save();
 
+            //generate token
+            const token = await storeData.generateToken();
+            console.log("newUser Token: ", token);
             const mailOptions = {
                 from: process.env.EMAIL,
                 to: email,
@@ -67,6 +74,20 @@ router.post("/register", async (req, res) => {
                     return res.status(201).json({ status: 201, message: "Email sent successfully", storeData });
                 }
             });
+
+            // transporter.sendMail(mailOptions, (error, info) => {
+            //     if (error) {
+            //         console.log("Email error:", error);
+            //         return res.status(500).json({ status: 500, error: "Failed to send email" });
+            //     }
+            //     console.log("Email sent:", info.response);
+            //     // Send the token in the response
+            //     res.status(201).json({
+            //         status: 201,
+            //         message: "Registration successful and email sent",
+            //         token: token // Include the token in the response
+            //     });
+            // });
         }
 
     } catch (error) {
@@ -78,15 +99,16 @@ router.post("/register", async (req, res) => {
 module.exports = router;
 
 
-
 // const express = require("express");
 // const router = new express.Router();
 // const users = require("../models/userSchema");
 // const nodemailer = require("nodemailer");
-// const bcrypt = require("bcryptjs");
-// const jwt = require("jsonwebtoken");
+// const cors = require("cors");
 
-// // Email config
+// // Use CORS middleware
+// router.use(cors());
+
+// // email config
 // const transporter = nodemailer.createTransport({
 //     service: "gmail",
 //     auth: {
@@ -95,92 +117,54 @@ module.exports = router;
 //     }
 // });
 
-// // Middleware to authenticate token
-// const auth = async (req, res, next) => {
-//     try {
-//         const token = req.header('Authorization').replace('Bearer ', '');
-//         const decoded = jwt.verify(token, process.env.SECRET_KEY);
-//         const user = await users.findOne({ _id: decoded._id, 'tokens.token': token });
-
-//         if (!user) {
-//             throw new Error();
-//         }
-
-//         req.token = token;
-//         req.user = user;
-//         next();
-//     } catch (error) {
-//         res.status(401).send({ error: 'Please authenticate.' });
-//     }
-// };
-
-// // Register user
+// //register user details
 // router.post("/register", async (req, res) => {
-//     const { fname, lname, email, password, mobile } = req.body;
+//     const { fname, lname, email, password, mobile, message } = req.body;
 
 //     if (!fname || !lname || !email || !password || !mobile) {
-//         return res.status(400).json({ error: "All fields are required" });
+//         return res.status(400).json({ status: 400, error: "All inputs required" });
 //     }
 
 //     try {
-//         const user = new users({ fname, lname, email, password, mobile });
-//         const token = await user.generateAuthToken();
-//         await user.save();
+//         let user = await users.findOne({ email: email });
 
-//         res.status(201).json({ user, token });
-//     } catch (error) {
-//         res.status(400).json({ error: "User registration failed" });
-//     }
-// });
-
-// // Login user
-// router.post("/login", async (req, res) => {
-//     const { email, password } = req.body;
-
-//     try {
-//         const user = await users.findOne({ email });
-
-//         if (!user) {
-//             return res.status(400).json({ error: "Invalid login credentials" });
+//         if (user) {
+//             const userMessage = await user.Messagesave(message);
+//             console.log(userMessage);
+//         } else {
+//             user = new users({
+//                 fname, lname, email, password, mobile, messages: [{ message }]
+//             });
+//             await user.save();
 //         }
 
-//         const isMatch = await bcrypt.compare(password, user.password);
-
-//         if (!isMatch) {
-//             return res.status(400).json({ error: "Invalid login credentials" });
-//         }
-
-//         const token = await user.generateAuthToken();
-
-//         res.json({ user, token });
-//     } catch (error) {
-//         res.status(500).json({ error: "Login failed" });
-//     }
-// });
-
-// // Authenticated route to handle contact form submission
-// router.post("/contact", auth, async (req, res) => {
-//     const { message } = req.body;
-
-//     try {
-//         const userMessage = await req.user.Messagesave(message);
+//         // Generate token
+//         const token = await user.generateToken(); // Using the method on the user instance
+//         console.log("Generated Token:", token);
 
 //         const mailOptions = {
 //             from: process.env.EMAIL,
-//             to: req.user.email,
-//             subject: "Message received",
-//             text: "Your message has been received successfully"
+//             to: email,
+//             subject: "Registration Confirmation",
+//             text: "Your Response Has Been Submitted"
 //         };
 
 //         transporter.sendMail(mailOptions, (error, info) => {
 //             if (error) {
-//                 return res.status(500).json({ error: "Email sending failed" });
-//             } else {
-//                 res.status(201).json({ message: "Message saved and email sent successfully" });
+//                 console.log("Email error:", error);
+//                 return res.status(500).json({ status: 500, error: "Failed to send email" });
 //             }
+//             console.log("Email sent:", info.response);
+//             res.status(201).json({
+//                 status: 201,
+//                 message: "Registration successful and email sent",
+//                 token: token // Include the token in the response
+//             });
 //         });
+
 //     } catch (error) {
-//         res.status(400).json({ error: "Message submission failed" });
+//         console.log("Registration error:", error);
+//         res.status(500).json({ status: 500, error: "Registration failed" });
 //     }
 // });
 
